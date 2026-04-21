@@ -9,7 +9,7 @@ function StatCard({ title, value, materialIcon, trend, trendValue, color = 'cora
                         <span className="material-icons-outlined">{materialIcon}</span>
                     </div>
                 )}
-                {trend && (
+                {trend && trend !== 'neutral' && (
                     <div className={`stat-trend stat-trend-${trend}`}>
                         <span className="material-icons-outlined trend-arrow">
                             {trend === 'up' ? 'trending_up' : 'trending_down'}

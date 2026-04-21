@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './BackhaulModal.css'; // Reusing styles
+import './JobSuccessModal.css'; // Reusing styles
 
 function DriverSelectionModal({ isOpen, onClose, drivers, onSelect, loading }) {
     if (!isOpen) return null;

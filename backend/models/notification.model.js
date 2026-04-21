@@ -11,7 +11,7 @@ const notificationSchema = new mongoose.Schema({
     },
     type: {
         type: String,
-        enum: ['trip_started', 'trip_completed', 'trip_refused', 'system'],
+        enum: ['trip_started', 'trip_completed', 'trip_refused', 'system', 'customer_note'],
         required: true
     },
     link: {

@@ -2,6 +2,22 @@ const express = require('express');
 const router = express.Router();
 const Vehicle = require('../models/vehicle.model');
 
+function hasExpiredCompliance(vehicle, now = new Date()) {
+    const licenseExpired = vehicle.licenseEndDate && new Date(vehicle.licenseEndDate) < now;
+    const insuranceExpired = vehicle.insuranceEndDate && new Date(vehicle.insuranceEndDate) < now;
+    return Boolean(licenseExpired || insuranceExpired);
+}
+
+async function enforceOutOfServiceIfExpired(vehicle, now = new Date()) {
+    if (!vehicle) return vehicle;
+    if (hasExpiredCompliance(vehicle, now) && vehicle.status !== 'Out of Service') {
+        vehicle.status = 'Out of Service';
+        vehicle.lastUpdated = now;
+        await vehicle.save();
+    }
+    return vehicle;
+}
+
 /**
  * GET /api/vehicles
  * Get all vehicles with optional filtering
@@ -15,6 +31,8 @@ router.get('/', async (req, res) => {
         if (type) filter.vehicleType = type;
 
         const vehicles = await Vehicle.find(filter).sort({ registrationNumber: 1 });
+        const now = new Date();
+        await Promise.all(vehicles.map((v) => enforceOutOfServiceIfExpired(v, now)));
 
         return res.status(200).json({
             success: true,
@@ -41,6 +59,11 @@ router.get('/maintenance/recent', async (req, res) => {
         const MaintenanceLog = require('../models/maintenanceLog.model');
         const logs = await MaintenanceLog.find()
             .populate('vehicle', 'registrationNumber vehicleType model')
+            .populate({
+                path: 'trip',
+                select: 'tripId primaryJob',
+                populate: { path: 'primaryJob', select: 'jobId' }
+            })
             .sort({ createdAt: -1 })
             .limit(4);
 
@@ -73,6 +96,8 @@ router.get('/:id', async (req, res) => {
             });
         }
 
+        await enforceOutOfServiceIfExpired(vehicle);
+
         return res.status(200).json({
             success: true,
             vehicle: vehicle
@@ -96,7 +121,11 @@ router.get('/:id/maintenance', async (req, res) => {
     try {
         const MaintenanceLog = require('../models/maintenanceLog.model');
         const logs = await MaintenanceLog.find({ vehicle: req.params.id })
-            .populate('trip', 'tripId')
+            .populate({
+                path: 'trip',
+                select: 'tripId primaryJob',
+                populate: { path: 'primaryJob', select: 'jobId' }
+            })
             .sort({ createdAt: -1 })
             .limit(10);
 
@@ -121,7 +150,7 @@ router.get('/:id/maintenance', async (req, res) => {
  */
 router.post('/', async (req, res) => {
     try {
-        const { registrationNumber, vehicleType, model, capacity, fuelConsumption, licenseEndDate, insuranceEndDate, currentLocation, driver, usageHours, serviceRecords } = req.body;
+        const { registrationNumber, vehicleType, model, capacity, fuelConsumption, licenseEndDate, insuranceEndDate, currentLocation, driver, usageHours, serviceRecords, status } = req.body;
 
         if (!registrationNumber || !vehicleType || !model || !capacity || !currentLocation) {
             return res.status(400).json({
@@ -145,8 +174,10 @@ router.post('/', async (req, res) => {
             usageHours: usageHours || 0,
             serviceRecords: serviceRecords || [],
             driver: driver || {},
-            status: 'available'
+            status: status || 'Active'
         });
+
+        await enforceOutOfServiceIfExpired(newVehicle);
 
         await newVehicle.save();
 
@@ -233,6 +264,9 @@ router.patch('/:id/status', async (req, res) => {
         }
 
         vehicle.status = status;
+        if (hasExpiredCompliance(vehicle)) {
+            vehicle.status = 'Out of Service';
+        }
         vehicle.lastUpdated = new Date();
         await vehicle.save();
 
@@ -268,6 +302,8 @@ router.put('/:id', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Vehicle not found' });
         }
 
+        await enforceOutOfServiceIfExpired(updatedVehicle);
+
         res.json({ success: true, vehicle: updatedVehicle });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
@@ -285,8 +321,8 @@ router.delete('/:id', async (req, res) => {
             return res.status(404).json({ success: false, error: 'Vehicle not found' });
         }
 
-        // Prevent deletion if vehicle is on an active trip (not available or off-duty)
-        if (vehicle.status !== 'available' && vehicle.status !== 'maintenance') {
+        // Prevent deletion if vehicle is not in an idle/maintainable state (legacy + new statuses)
+        if (!['Active', 'In Maintenance', 'available', 'maintenance'].includes(vehicle.status)) {
             return res.status(400).json({ success: false, error: `Cannot delete vehicle with status: ${vehicle.status}` });
         }
 

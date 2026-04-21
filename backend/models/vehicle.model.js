@@ -60,8 +60,21 @@ const vehicleSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ['available', 'in-transit', 'maintenance', 'offline'],
-        default: 'available'
+        /**
+         * Vehicle operational status (not trip occupancy).
+         * Legacy values are kept for backwards compatibility with existing DB records.
+         */
+        enum: [
+            'Active',
+            'In Maintenance',
+            'Out of Service',
+            // legacy
+            'available',
+            'in-transit',
+            'maintenance',
+            'offline'
+        ],
+        default: 'Active'
     },
 
     // Driver information (optional - can be expanded later)
@@ -75,6 +88,12 @@ const vehicleSchema = new mongoose.Schema({
     usageHours: {
         type: Number,
         default: 0
+    },
+    /** Increments on each completed trip; ML prediction runs when this count is a multiple of 5 (see predictiveMaintenance.service). */
+    tripsSinceMaintenancePrediction: {
+        type: Number,
+        default: 0,
+        min: 0
     },
     serviceRecords: [{
         date: { type: Date, required: true },
@@ -99,6 +118,12 @@ const vehicleSchema = new mongoose.Schema({
         type: Number,
         default: 8, // Target KPL
         min: 0
+    },
+
+    // Reset date for fuel consistency tracking
+    fuelConsistencyResetAt: {
+        type: Date,
+        default: null
     },
 
     // Metadata

@@ -29,7 +29,7 @@ function initializeFirebase() {
         !process.env.FIREBASE_PRIVATE_KEY.includes('YOUR_FIREBASE');
 
     if (!hasCredentials) {
-        console.warn('\n⚠️  Firebase credentials not configured in .env file');
+        console.warn('\n Firebase credentials not configured in .env file');
         console.warn('   Running in DEVELOPMENT MODE without real-time features');
         console.warn('   To enable Firebase: Add credentials to backend/.env\n');
         firebaseInitialized = false;
@@ -48,10 +48,10 @@ function initializeFirebase() {
         });
 
         firebaseInitialized = true;
-        console.log('✅ Firebase initialized successfully');
+        console.log('Firebase initialized successfully');
     } catch (error) {
-        console.error('❌ Firebase initialization error:', error.message);
-        console.warn('⚠️  Running without Firebase. Real-time features disabled.\n');
+        console.error('Firebase initialization error:', error.message);
+        console.warn('Running without Firebase. Real-time features disabled.\n');
         firebaseInitialized = false;
         // Don't throw - allow server to continue
     }
@@ -115,7 +115,8 @@ async function pushTripToFirebase(trip, vehicle, primaryJob, backhaulJob, route)
                 coordinates: primaryJob.delivery.location.coordinates,
                 datetime: primaryJob.delivery.datetime.toISOString(),
                 contact: primaryJob.delivery.contactName
-            }
+            },
+            specialInstructions: primaryJob.specialInstructions || null
         },
 
         // Backhaul job (if exists)
@@ -133,7 +134,8 @@ async function pushTripToFirebase(trip, vehicle, primaryJob, backhaulJob, route)
                 coordinates: backhaulJob.delivery.location.coordinates,
                 datetime: backhaulJob.delivery.datetime.toISOString(),
                 contact: backhaulJob.delivery.contactName
-            }
+            },
+            specialInstructions: backhaulJob.specialInstructions || null
         } : null,
 
         // Metadata
@@ -297,6 +299,32 @@ async function archiveTrip(tripId) {
     }
 }
 
+/**
+ * Update Customer Note (Special Instructions) in Firebase
+ * @param {String} tripId 
+ * @param {String} jobType - 'primaryJob' or 'backhaulJob'
+ * @param {String} note - The updated customer note
+ * @returns {Promise<void>}
+ */
+async function updateCustomerNoteFirebase(tripId, jobType, note) {
+    if (!firebaseInitialized) {
+        initializeFirebase();
+    }
+    if (!firebaseInitialized) return;
+
+    const db = admin.database();
+    const ref = db.ref(`trips/${tripId}/${jobType}`);
+
+    try {
+        await ref.update({
+            specialInstructions: note || null
+        });
+        console.log(`Updated ${jobType} note for Trip ${tripId} in Firebase`);
+    } catch (error) {
+        console.error('Firebase note update error:', error.message);
+    }
+}
+
 module.exports = {
     initializeFirebase,
     pushTripToFirebase,
@@ -304,5 +332,6 @@ module.exports = {
     updateDriverPosition,
     deleteTripFromFirebase,
     sendDriverNotification,
-    archiveTrip
+    archiveTrip,
+    updateCustomerNoteFirebase
 };

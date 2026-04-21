@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { jobAPI, tripAPI } from '../../services/api';
 import TripModal from './TripModal';
-import { BlinkBlur } from 'react-loading-indicators';
+import PageLoading from '../common/PageLoading';
 
 function Trips() {
     const [jobs, setJobs] = useState([]);
@@ -84,11 +84,7 @@ function Trips() {
     };
 
     if (loading) {
-        return (
-            <div className="loading-container">
-                <BlinkBlur color="#f59e0b" size="medium" text="" textColor="" />
-            </div>
-        );
+        return <PageLoading />;
     }
 
     return (
@@ -215,7 +211,10 @@ function Trips() {
             </div>
 
             {/* Delete Confirmation Modal */}
-            {deleteTripId && (
+            {deleteTripId && (() => {
+                const deleteJobRef = jobs.find((j) => j.assignedTrip?.tripId === deleteTripId);
+                const deleteDisplayId = deleteJobRef?.jobId || deleteTripId;
+                return (
                 <div className="modal-overlay" style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
@@ -238,7 +237,7 @@ function Trips() {
                                 Delete Trip?
                             </h2>
                             <p style={{ color: '#6B7280', lineHeight: '1.5' }}>
-                                Are you sure you want to delete <strong style={{ color: '#1A1D26' }}>{deleteTripId}</strong>? The associated vehicles and jobs will be released and set back to pending.
+                                Are you sure you want to delete job <strong style={{ color: '#1A1D26' }}>{deleteDisplayId}</strong>? The associated vehicles and jobs will be released and set back to pending.
                             </p>
                         </div>
 
@@ -268,10 +267,14 @@ function Trips() {
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
 
             {/* Complete Confirmation Modal */}
-            {completeTripId && (
+            {completeTripId && (() => {
+                const completeJobRef = jobs.find((j) => j.assignedTrip?.tripId === completeTripId);
+                const completeDisplayId = completeJobRef?.jobId || completeTripId;
+                return (
                 <div className="modal-overlay" style={{
                     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
                     backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
@@ -294,7 +297,7 @@ function Trips() {
                                 Complete Trip?
                             </h2>
                             <p style={{ color: '#6B7280', lineHeight: '1.5' }}>
-                                Mark <strong style={{ color: '#1A1D26' }}>{completeTripId}</strong> as completed? This will trigger the Predictive Maintenance ML Engine validation.
+                                Mark job <strong style={{ color: '#1A1D26' }}>{completeDisplayId}</strong> as completed? This will trigger the Predictive Maintenance ML Engine validation.
                             </p>
                         </div>
 
@@ -324,7 +327,8 @@ function Trips() {
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
 
             {/* Toast Notifications */}
             {toastMessage.text && (

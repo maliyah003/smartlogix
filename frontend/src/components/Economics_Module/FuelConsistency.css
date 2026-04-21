@@ -1,0 +1,119 @@
+.fuel-consistency-page {
+    width: 100%;
+}
+
+.fc-metrics-grid {
+    margin-bottom: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.fc-metric-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.fc-metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.fc-metric-icon .material-icons-outlined {
+    font-size: 1.5rem;
+}
+
+.fc-metric-icon--info {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--status-info);
+}
+
+.fc-metric-icon--warn {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--status-warning);
+}
+
+.fc-metric-copy {
+    min-width: 0;
+}
+
+.fc-metric-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.fc-metric-value {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.fc-table-wrap {
+    overflow-x: auto;
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+}
+
+.fc-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.fc-data-table thead tr {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.fc-data-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fc-data-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.fc-data-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.fc-data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.fc-vehicle-pill {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    border: 1px solid var(--border-light);
+}
+
+.fc-empty-row {
+    text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: var(--text-tertiary);
+    font-style: italic;
+}

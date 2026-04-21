@@ -98,6 +98,7 @@ async function findBestVehicle(jobDetails, options = {}) {
 
     const { cargo, pickup, delivery } = jobDetails;
     const pickupCoords = pickup.location ? pickup.location.coordinates : pickup.coordinates;
+    const now = new Date();
 
     const newJobStart = pickup.datetime ? new Date(pickup.datetime) : new Date();
     // Default to 4 hours if delivery time is missing
@@ -108,9 +109,13 @@ async function findBestVehicle(jobDetails, options = {}) {
     const searchStart = new Date(newJobStart.getTime() - bufferMs);
     const searchEnd = new Date(newJobEnd.getTime() + bufferMs);
 
-    // Step 1: Find potential vehicles that can carry the cargo (excluding offline/maintenance)
+    // Step 1: Find potential vehicles that can carry the cargo (excluding maintenance/out-of-service/offline)
     const potentialVehicles = await Vehicle.find({
-        status: { $nin: ['maintenance', 'offline'] },
+        status: { $nin: ['In Maintenance', 'Out of Service', 'maintenance', 'offline'] },
+        $and: [
+            { $or: [{ licenseEndDate: { $exists: false } }, { licenseEndDate: null }, { licenseEndDate: { $gte: now } }] },
+            { $or: [{ insuranceEndDate: { $exists: false } }, { insuranceEndDate: null }, { insuranceEndDate: { $gte: now } }] }
+        ],
         'capacity.weight': { $gte: cargo.weight },
         'capacity.volume': { $gte: cargo.volume }
     });
@@ -225,8 +230,13 @@ async function getAllMatchedVehicles(jobDetails) {
     const searchStart = new Date(newJobStart.getTime() - bufferMs);
     const searchEnd = new Date(newJobEnd.getTime() + bufferMs);
 
+    const now = new Date();
     const potentialVehicles = await Vehicle.find({
-        status: { $nin: ['maintenance', 'offline'] },
+        status: { $nin: ['In Maintenance', 'Out of Service', 'maintenance', 'offline'] },
+        $and: [
+            { $or: [{ licenseEndDate: { $exists: false } }, { licenseEndDate: null }, { licenseEndDate: { $gte: now } }] },
+            { $or: [{ insuranceEndDate: { $exists: false } }, { insuranceEndDate: null }, { insuranceEndDate: { $gte: now } }] }
+        ],
         'capacity.weight': { $gte: cargo.weight },
         'capacity.volume': { $gte: cargo.volume }
     });

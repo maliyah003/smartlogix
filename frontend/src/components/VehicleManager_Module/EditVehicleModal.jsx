@@ -5,6 +5,7 @@ function EditVehicleModal({ isOpen, onClose, onVehicleUpdated, vehicle }) {
     const [formData, setFormData] = useState({
         registrationNumber: '',
         vehicleType: 'truck',
+        status: 'Active',
         model: '',
         capacity: { weight: '', volume: '' },
         fuelConsumption: '',
@@ -21,6 +22,7 @@ function EditVehicleModal({ isOpen, onClose, onVehicleUpdated, vehicle }) {
             setFormData({
                 registrationNumber: vehicle.registrationNumber || '',
                 vehicleType: vehicle.vehicleType || 'truck',
+                status: vehicle.status || 'Active',
                 model: vehicle.model || '',
                 capacity: {
                     weight: vehicle.capacity?.weight || '',
@@ -123,6 +125,22 @@ function EditVehicleModal({ isOpen, onClose, onVehicleUpdated, vehicle }) {
                                 <option value="Van">Van</option>
                             </select>
                         </div>
+                        <div className="form-group">
+                            <label className="form-label">Status *</label>
+                            <select
+                                name="status"
+                                className="form-select"
+                                value={formData.status}
+                                onChange={handleChange}
+                            >
+                                <option value="Active">Active</option>
+                                <option value="In Maintenance">In Maintenance</option>
+                                <option value="Out of Service">Out of Service</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
                         <div className="form-group">
                             <label className="form-label">Model *</label>
                             <input

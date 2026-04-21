@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import './BackhaulModal.css';
+import './JobSuccessModal.css';
 
 // Fix for default marker icons
 import L from 'leaflet';

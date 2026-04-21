@@ -1,19 +1,36 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import loginImage from '../assets/Login.png';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import loginImage from '../assets/Login.svg';
+import { setAuthenticated } from '../auth/session';
+import { validateAdminCredentials } from '../config/adminAuth';
 
 function Login() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [credentials, setCredentials] = useState({ username: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
+    const [error, setError] = useState('');
 
     const handleLogin = (e) => {
         e.preventDefault();
+        setError('');
+        const username = credentials.username.trim();
+        const password = credentials.password;
+
+        if (!validateAdminCredentials(username, password)) {
+            setError('Invalid username or password.');
+            return;
+        }
+
         setLoading(true);
         setTimeout(() => {
-            navigate('/');
-        }, 800);
+            setAuthenticated();
+            const from = location.state?.from?.pathname;
+            const safePath = from && from !== '/login' ? from : '/';
+            navigate(safePath, { replace: true });
+            setLoading(false);
+        }, 400);
     };
 
     return (
@@ -35,6 +52,7 @@ function Login() {
             
             {/* Floating Login Card on Right Side */}
             <div style={{ 
+                position: 'relative',
                 width: '100%', 
                 maxWidth: '420px', 
                 marginRight: '10vw',
@@ -47,14 +65,52 @@ function Login() {
                 flexDirection: 'column', 
                 justifyContent: 'center'
             }}>
+                <Link
+                    to="/track"
+                    aria-label="Back to tracking"
+                    style={{
+                        position: 'absolute',
+                        left: 12,
+                        top: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 40,
+                        height: 40,
+                        borderRadius: 10,
+                        color: '#374151',
+                        textDecoration: 'none',
+                        backgroundColor: 'rgba(243, 244, 246, 0.9)',
+                        border: '1px solid #E5E7EB',
+                    }}
+                >
+                    <span className="material-icons-outlined" style={{ fontSize: 22 }}>arrow_back</span>
+                </Link>
                 {/* Header Greetings */}
-                <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+                <div style={{ marginBottom: '2.5rem', textAlign: 'center', paddingTop: 8 }}>
                     <h1 style={{ fontSize: '2.5rem', fontWeight: '800', color: '#111827', margin: '0 0 0.5rem 0', letterSpacing: '-0.5px' }}>Welcome</h1>
-                    <p style={{ fontSize: '1rem', color: '#6B7280', margin: 0 }}>Please login to admin dashboard</p>
+                    <p style={{ fontSize: '1rem', color: '#6B7280', margin: 0 }}>
+                        Sign in to continue to your workspace.
+                    </p>
                 </div>
 
                 {/* Form Inputs */}
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    {error ? (
+                        <div
+                            role="alert"
+                            style={{
+                                padding: '0.75rem 1rem',
+                                backgroundColor: '#FEF2F2',
+                                border: '1px solid #FECACA',
+                                borderRadius: '8px',
+                                color: '#B91C1C',
+                                fontSize: '0.875rem',
+                            }}
+                        >
+                            {error}
+                        </div>
+                    ) : null}
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <label style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>Username</label>

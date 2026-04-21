@@ -9,7 +9,10 @@ function Sidebar() {
         { path: '/book-job', icon: 'add_box', title: 'Book Job' },
         { path: '/trips', icon: 'route', title: 'Trips' },
         { path: '/refusals', icon: 'fact_check', title: 'Refusal Requests' },
-        { path: '/predictive-maintenance', icon: 'memory', title: 'Predictive Engine' }
+        { path: '/predictive-maintenance', icon: 'memory', title: 'Predictive Engine' },
+        { path: '/economics', icon: 'account_balance_wallet', title: 'Trip Economics' },
+        { path: '/fuel-consistency', icon: 'local_gas_station', title: 'Fuel Consistency' },
+        { path: '/proof-of-delivery', icon: 'verified', title: 'Proof Of Delivery' }
     ];
 
     return (
@@ -29,12 +32,6 @@ function Sidebar() {
                     </NavLink>
                 ))}
             </nav>
-
-            <div className="sidebar-footer">
-                <div className="user-profile" title="Profile">
-                    <span className="material-icons-outlined">person</span>
-                </div>
-            </div>
         </aside>
     );
 }

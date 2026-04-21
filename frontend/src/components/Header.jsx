@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../services/api';
+import { clearSession } from '../auth/session';
 import './Header.css';
 import logoImg from '../assets/SmartLogixLOGO.png';
 
@@ -99,9 +100,6 @@ function Header() {
             </div>
 
             <div className="header-right">
-                <button className="header-action" title="Search">
-                    <span className="material-icons-outlined">search</span>
-                </button>
 
                 <div className="notification-container" ref={dropdownRef}>
                     <button
@@ -153,6 +151,18 @@ function Header() {
                 </div>
 
                 <span className="header-divider"></span>
+
+                <button
+                    type="button"
+                    className="header-sign-out"
+                    title="Sign out"
+                    onClick={() => {
+                        clearSession();
+                        navigate('/track', { replace: true });
+                    }}
+                >
+                    Sign out
+                </button>
 
                 <div className="header-user">
                     <div className="header-user-avatar">SL</div>

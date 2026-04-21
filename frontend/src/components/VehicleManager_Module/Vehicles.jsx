@@ -3,7 +3,7 @@ import { vehicleAPI } from '../../services/api';
 import '../../pages/Vehicles.css'; // Adjust path or move CSS too
 import AddVehicleModal from './AddVehicleModal';
 import EditVehicleModal from './EditVehicleModal';
-import { BlinkBlur } from 'react-loading-indicators';
+import PageLoading from '../common/PageLoading';
 
 function Vehicles() {
     const [vehicles, setVehicles] = useState([]);
@@ -60,8 +60,16 @@ function Vehicles() {
         }
     };
 
+    const normalizeVehicleStatus = (status) => {
+        if (status === 'available') return 'Active';
+        if (status === 'maintenance') return 'In Maintenance';
+        if (status === 'offline') return 'Out of Service';
+        return status || 'Active';
+    };
+
     const filteredVehicles = vehicles.filter(vehicle => {
-        const matchesStatus = filterStatus === 'all' || vehicle.status === filterStatus;
+        const normalizedStatus = normalizeVehicleStatus(vehicle.status);
+        const matchesStatus = filterStatus === 'all' || normalizedStatus === filterStatus;
         const matchesSearch = !searchTerm ||
             vehicle.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             vehicle.driver?.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,6 +78,10 @@ function Vehicles() {
 
     const getStatusColor = (status) => {
         const colors = {
+            'Active': '#34D399',
+            'In Maintenance': '#FBBF24',
+            'Out of Service': '#D1D5DB',
+            // legacy
             'available': '#34D399',
             'in-transit': '#60A5FA',
             'maintenance': '#FBBF24',
@@ -93,9 +105,7 @@ function Vehicles() {
 
     if (loading) {
         return (
-            <div className="loading-container">
-                <BlinkBlur color="#f59e0b" size="medium" text="" textColor="" />
-            </div>
+            <PageLoading />
         );
     }
 
@@ -151,22 +161,22 @@ function Vehicles() {
                         All ({vehicles.length})
                     </button>
                     <button
-                        className={`filter-chip ${filterStatus === 'available' ? 'active' : ''}`}
-                        onClick={() => setFilterStatus('available')}
+                        className={`filter-chip ${filterStatus === 'Active' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('Active')}
                     >
-                        Available ({vehicles.filter(v => v.status === 'available').length})
+                        Active ({vehicles.filter(v => v.status === 'Active' || v.status === 'available').length})
                     </button>
                     <button
-                        className={`filter-chip ${filterStatus === 'in-transit' ? 'active' : ''}`}
-                        onClick={() => setFilterStatus('in-transit')}
+                        className={`filter-chip ${filterStatus === 'In Maintenance' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('In Maintenance')}
                     >
-                        In Transit ({vehicles.filter(v => v.status === 'in-transit').length})
+                        In Maintenance ({vehicles.filter(v => v.status === 'In Maintenance' || v.status === 'maintenance').length})
                     </button>
                     <button
-                        className={`filter-chip ${filterStatus === 'maintenance' ? 'active' : ''}`}
-                        onClick={() => setFilterStatus('maintenance')}
+                        className={`filter-chip ${filterStatus === 'Out of Service' ? 'active' : ''}`}
+                        onClick={() => setFilterStatus('Out of Service')}
                     >
-                        Maintenance ({vehicles.filter(v => v.status === 'maintenance').length})
+                        Out of Service ({vehicles.filter(v => v.status === 'Out of Service' || v.status === 'offline').length})
                     </button>
                 </div>
             </div>
@@ -179,6 +189,14 @@ function Vehicles() {
                                 <div className="vehicle-icon">
                                     <span className="material-icons-outlined">local_shipping</span>
                                 </div>
+                                <div style={{ flex: 1, minWidth: 0, marginLeft: '0.75rem' }}>
+                                    <div className="vehicle-number" style={{ margin: 0, fontSize: '1.05rem' }}>
+                                        {vehicle.registrationNumber}
+                                    </div>
+                                    <div className="vehicle-type" style={{ margin: 0 }}>
+                                        {vehicle.model} ({vehicle.vehicleType})
+                                    </div>
+                                </div>
                                 <div
                                     className="status-indicator"
                                     style={{ background: getStatusColor(vehicle.status) }}
@@ -187,8 +205,9 @@ function Vehicles() {
                             </div>
 
                             <div className="vehicle-card-body">
-                                <h3 className="vehicle-number">{vehicle.registrationNumber}</h3>
-                                <p className="vehicle-type">{vehicle.model} ({vehicle.vehicleType})</p>
+                                <p className="vehicle-type" style={{ marginTop: '-0.4rem', marginBottom: '0.75rem', fontWeight: 600 }}>
+                                    Status: {normalizeVehicleStatus(vehicle.status)}
+                                </p>
 
                                 <div className="vehicle-specs">
                                     <div className="spec-item">

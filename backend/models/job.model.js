@@ -60,7 +60,15 @@ const jobSchema = new mongoose.Schema({
             required: true
         },
         contactName: String,
-        contactPhone: String
+        contactPhone: {
+            type: String,
+            validate: {
+                validator: function (v) {
+                    return /^0\d{9}$/.test(v);
+                },
+                message: props => `${props.value} is not a valid Sri Lankan phone number! Must start with 0 and have 10 digits.`
+            }
+        }
     },
 
     // Delivery location (GeoJSON Point)
@@ -86,7 +94,15 @@ const jobSchema = new mongoose.Schema({
             required: true
         },
         contactName: String,
-        contactPhone: String
+        contactPhone: {
+            type: String,
+            validate: {
+                validator: function (v) {
+                    return /^0\d{9}$/.test(v);
+                },
+                message: props => `${props.value} is not a valid Sri Lankan phone number! Must start with 0 and have 10 digits.`
+            }
+        }
     },
 
     status: {
@@ -121,8 +137,24 @@ const jobSchema = new mongoose.Schema({
     // Customer information
     customer: {
         name: String,
-        phone: String,
-        email: String,
+        phone: {
+            type: String,
+            validate: {
+                validator: function (v) {
+                    return /^0\d{9}$/.test(v);
+                },
+                message: props => `${props.value} is not a valid Sri Lankan phone number! Must start with 0 and have 10 digits.`
+            }
+        },
+        email: {
+            type: String,
+            validate: {
+                validator: function (v) {
+                    return /^\S+@\S+\.\S+$/.test(v);
+                },
+                message: props => `${props.value} is not a valid email address!`
+            }
+        },
         companyName: String
     },
 

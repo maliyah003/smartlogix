@@ -1,0 +1,57 @@
+.trip-economics-page {
+    width: 100%;
+}
+
+.trip-economics-table-wrap {
+    overflow-x: auto;
+    margin: 0 -0.25rem;
+    padding: 0 0.25rem;
+}
+
+.trip-economics-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.875rem;
+}
+
+.trip-economics-table thead tr {
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.trip-economics-table th {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.trip-economics-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+    vertical-align: middle;
+}
+
+.trip-economics-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.trip-economics-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.trip-economics-cell-strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.trip-economics-empty {
+    text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: var(--text-tertiary);
+    font-style: italic;
+}

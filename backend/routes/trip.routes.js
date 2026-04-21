@@ -3,6 +3,7 @@ const router = express.Router();
 const Trip = require('../models/trip.model');
 const Notification = require('../models/notification.model');
 const firebaseService = require('../services/firebase.service');
+const predictiveMaintenanceService = require('../services/predictiveMaintenance.service');
 
 /**
  * GET /api/trips
@@ -125,6 +126,15 @@ router.patch('/:tripId/status', async (req, res) => {
         if (status === 'active') {
              if (!trip.actualTimes) trip.actualTimes = {};
              trip.actualTimes.startTime = new Date();
+             
+             // Update associated Jobs to 'in-transit'
+             const Job = require('../models/job.model');
+             if (trip.primaryJob) {
+                 await Job.findByIdAndUpdate(trip.primaryJob, { status: 'in-transit' });
+             }
+             if (trip.backhaulJob) {
+                 await Job.findByIdAndUpdate(trip.backhaulJob, { status: 'in-transit' });
+             }
         }
 
         if (status === 'completed') {
@@ -132,105 +142,17 @@ router.patch('/:tripId/status', async (req, res) => {
             if (!trip.actualTimes) trip.actualTimes = {};
             trip.actualTimes.endTime = new Date();
             
-            // Run background task for predictive maintenance calculation
-            (async () => {
-                try {
-                    const Vehicle = require('../models/vehicle.model');
-                    const MaintenanceLog = require('../models/maintenanceLog.model');
-                    const axios = require('axios');
-                    
-                    const vehicle = await Vehicle.findById(trip.vehicle);
-                    await trip.populate('primaryJob');
-                    
-                    if (vehicle) {
-                        // usage_hours increments by total trip duration (trip + return) in hours
-                        let tripDurationHours = 2; // fallback
-                        
-                        // Use real tracked hours if the driver successfully flowed through Active -> Completed
-                        if (trip.actualTimes && trip.actualTimes.startTime && trip.actualTimes.endTime) {
-                            const realDurationMs = trip.actualTimes.endTime.getTime() - trip.actualTimes.startTime.getTime();
-                            tripDurationHours = (realDurationMs / 3600000) * 2; // Exact logged hours * 2 (Return Journey)
-                        } else if (trip.route && trip.route.duration) {
-                            // Fallback to routing estimate testing/bypassed trips
-                            tripDurationHours = (trip.route.duration / 3600) * 2;
-                        }
-                        
-                        vehicle.usageHours = (vehicle.usageHours || 0) + tripDurationHours;
-                        await vehicle.save();
-
-                        // Compute route type dynamically based on average speed heuristic
-                        // speed = distance (m) / duration (s) * 3.6 = km/h
-                        let dynamicRouteType = 'Rural';
-                        if (trip.route && trip.route.distance && trip.route.duration) {
-                            const avgSpeedKmH = (trip.route.distance / trip.route.duration) * 3.6;
-                            if (avgSpeedKmH > 65) {
-                                dynamicRouteType = 'Highway';
-                            } else if (avgSpeedKmH < 35) {
-                                dynamicRouteType = 'Urban';
-                            }
-                        }
-                        
-                        // Map vehicleType to "Truck" / "Van" format for model
-                        const vehicleTypeML = ['van', 'Van'].includes(vehicle.vehicleType) ? 'Van' : 'Truck';
-                        
-                        // Convert capacity weight (kg) to tons
-                        const loadCapacity = vehicle.capacity && vehicle.capacity.weight ? (vehicle.capacity.weight / 1000) : 20.0;
-                        
-                        // Convert primary job weight (kg) to tons
-                        let actualLoad = 0;
-                        if (trip.primaryJob && trip.primaryJob.cargo && trip.primaryJob.cargo.weight) {
-                            actualLoad = trip.primaryJob.cargo.weight / 1000;
-                        } else {
-                            actualLoad = 18.5; // fallback
-                        }
-                        
-                        // Calculate days since service
-                        let daysSinceService = 300;
-                        if (vehicle.serviceRecords && vehicle.serviceRecords.length > 0) {
-                            const sortedRecords = [...vehicle.serviceRecords].sort((a,b) => b.date - a.date);
-                            const lastService = sortedRecords[0].date;
-                            daysSinceService = Math.floor((Date.now() - new Date(lastService).getTime()) / (1000 * 3600 * 24));
-                        } else if (vehicle.createdAt) {
-                            daysSinceService = Math.floor((Date.now() - new Date(vehicle.createdAt).getTime()) / (1000 * 3600 * 24));
-                        }
-                        
-                        const mlPayload = {
-                           "vehicle_type": vehicleTypeML,
-                           "usage_hours": Math.round(vehicle.usageHours * 10) / 10, // Round to 1 decimal place
-                           "route_info": dynamicRouteType,
-                           "actual_load": Math.round(actualLoad * 10) / 10, // Round to 1 decimal place
-                           "load_capacity": Math.round(loadCapacity * 10) / 10, // Round to 1 decimal place
-                           "days_since_service": Math.max(0, daysSinceService)
-                        };
-                        
-                        // Make POST to local predictive ML model
-                        try {
-                            const mlResponse = await axios.post('http://127.0.0.1:5004/predict', mlPayload, {
-                                headers: { 'Content-Type': 'application/json' }
-                            });
-                            
-                            // Save prediction results
-                            await MaintenanceLog.create({
-                                vehicle: vehicle._id,
-                                trip: trip._id,
-                                metrics: mlPayload,
-                                prediction: mlResponse.data
-                            });
-                        } catch (mlErr) {
-                            console.error('Predictive ML endpoint unreachable:', mlErr.message);
-                            // Save the log even if prediction service is down
-                            await MaintenanceLog.create({
-                                vehicle: vehicle._id,
-                                trip: trip._id,
-                                metrics: mlPayload,
-                                prediction: { error: 'Failed to communicate with predictive model at port 5004' }
-                            });
-                        }
-                    }
-                } catch(e) {
-                    console.error('Error in predictive maintenance background hook:', e);
-                }
-            })();
+            // Usage hours + trip counter always; ML prediction every 5th completed trip per vehicle
+            predictiveMaintenanceService.calculateAndLogPrediction(trip);
+            
+            // Update associated Jobs to 'completed'
+            const Job = require('../models/job.model');
+            if (trip.primaryJob) {
+                 await Job.findByIdAndUpdate(trip.primaryJob, { status: 'completed' });
+            }
+            if (trip.backhaulJob) {
+                 await Job.findByIdAndUpdate(trip.backhaulJob, { status: 'completed' });
+            }
         }
 
         await trip.save();
@@ -268,6 +190,25 @@ router.patch('/:tripId/status', async (req, res) => {
             error: 'Failed to update trip status',
             details: error.message
         });
+    }
+});
+
+/**
+ * GET /api/trips/:tripId/position
+ * Get driver's current position safely from MongoDB
+ */
+router.get('/:tripId/position', async (req, res) => {
+    try {
+        const trip = await Trip.findOne({ tripId: req.params.tripId }).select('currentPosition');
+        if (!trip || !trip.currentPosition) {
+            return res.status(404).json({ success: false, error: 'Position not found' });
+        }
+        return res.status(200).json({
+            success: true,
+            coordinates: trip.currentPosition.coordinates // [lng, lat]
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: 'Failed to fetch position' });
     }
 });
 

@@ -3,7 +3,7 @@ import Flatpickr from "react-flatpickr";
 import "flatpickr/dist/themes/light.css";
 import { jobAPI } from '../../services/api';
 import LocationPicker from './LocationPicker';
-import BackhaulModal from './BackhaulModal';
+import JobSuccessModal from './JobSuccessModal';
 import DriverSelectionModal from './DriverSelectionModal';
 import VehicleSelectionModal from './VehicleSelectionModal';
 import BackhaulSelectionModal from './BackhaulSelectionModal';
@@ -272,7 +272,7 @@ function BookJob() {
                 loading={loading}
             />
 
-            <BackhaulModal
+            <JobSuccessModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 data={result}
@@ -456,11 +456,14 @@ function BookJob() {
                         <div className="form-group">
                             <label className="form-label">Customer Phone</label>
                             <input
-                                type="text"
+                                type="tel"
                                 className="form-input"
                                 value={formData.customer.phone}
-                                onChange={(e) => setFormData({ ...formData, customer: { ...formData.customer, phone: e.target.value } })}
-                                placeholder="+94 77 123 4567"
+                                onChange={(e) => {
+                                    const value = e.target.value.replace(/[^0-9+]/g, '');
+                                    setFormData({ ...formData, customer: { ...formData.customer, phone: value } });
+                                }}
+                                placeholder="+94771234567"
                             />
                         </div>
                         <div className="form-group">

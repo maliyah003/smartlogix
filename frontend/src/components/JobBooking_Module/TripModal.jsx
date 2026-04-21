@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { tripAPI } from '../../services/api';
-import { BlinkBlur } from 'react-loading-indicators';
+import PageLoading from '../common/PageLoading';
 
 // Fix Leaflet's default icon path issues in React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -171,7 +171,7 @@ function TripModal({ isOpen, onClose, tripId }) {
             <div className="modal-content" style={{ maxWidth: '1100px', width: '95%', height: '90vh', display: 'flex', flexDirection: 'column', borderRadius: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}>
                 <div className="modal-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', background: 'var(--bg-secondary)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}>
                     <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        Trip Details: {tripData ? tripData.tripId : tripId}
+                        Job: {tripData?.primaryJob?.jobId || (tripData ? tripData.tripId : tripId)}
                         {tripData && (
                             <span className={`badge ${getStatusBadge(tripData.status)}`} style={{ marginLeft: '1rem', fontSize: '0.85rem', padding: '0.25rem 0.75rem', borderRadius: '9999px', textTransform: 'capitalize' }}>
                                 {tripData.status}
@@ -182,9 +182,15 @@ function TripModal({ isOpen, onClose, tripId }) {
                 </div>
 
                 {loading && (
-                    <div className="loading-container" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <BlinkBlur color="#f59e0b" size="medium" text="" textColor="" />
-                    </div>
+                    <PageLoading
+                        style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: 240
+                        }}
+                    />
                 )}
 
                 {error && (

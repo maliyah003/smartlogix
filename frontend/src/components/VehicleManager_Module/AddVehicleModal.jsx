@@ -5,6 +5,7 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
     const [formData, setFormData] = useState({
         registrationNumber: '',
         vehicleType: 'Truck',
+        status: 'Active',
         model: '',
         capacity: { weight: '', volume: '' },
         fuelConsumption: '',
@@ -51,8 +52,7 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
                 }] : [],
                 currentLocation: {
                     coordinates: [79.8612, 6.9271] // Default coordinates
-                },
-                status: 'available'
+                }
             };
 
             await vehicleAPI.create(payload);
@@ -62,6 +62,7 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
             setFormData({
                 registrationNumber: '',
                 vehicleType: 'Truck',
+                status: 'Active',
                 model: '',
                 capacity: { weight: '', volume: '' },
                 fuelConsumption: '',
@@ -80,8 +81,15 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
 
     return (
         <div className="modal-overlay">
-            <div className="modal-content" style={{ maxWidth: '600px', width: '90%', padding: '2rem' }}>
-                <div className="modal-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+            <div className="modal-content" style={{ 
+                maxWidth: '600px', 
+                width: '90%', 
+                padding: '2rem',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                display: 'block' // Ensure display block for overflow to work correctly
+            }}>
+                <div className="modal-header" style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem', position: 'sticky', top: '-2rem', background: 'white', zIndex: 1, marginTop: '-2rem', paddingTop: '2rem' }}>
                     <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>Add New Vehicle</h2>
                     <button className="close-btn" onClick={onClose} style={{ fontSize: '1.5rem' }}>&times;</button>
                 </div>
@@ -115,6 +123,22 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
                                 <option value="Van">Van</option>
                             </select>
                         </div>
+                        <div className="form-group">
+                            <label className="form-label">Status *</label>
+                            <select
+                                name="status"
+                                className="form-select"
+                                value={formData.status}
+                                onChange={handleChange}
+                            >
+                                <option value="Active">Active</option>
+                                <option value="In Maintenance">In Maintenance</option>
+                                <option value="Out of Service">Out of Service</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-row">
                         <div className="form-group">
                             <label className="form-label">Model *</label>
                             <input
@@ -154,20 +178,19 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Fuel Consumption (km/l)</label>
-                        <input
-                            type="number"
-                            name="fuelConsumption"
-                            className="form-input"
-                            value={formData.fuelConsumption}
-                            onChange={handleChange}
-                            step="0.1"
-                        />
-                    </div>
-
                     <div className="form-row">
-                        <div className="form-group" style={{ flex: 1 }}>
+                        <div className="form-group">
+                            <label className="form-label">Fuel Consumption (km/l)</label>
+                            <input
+                                type="number"
+                                name="fuelConsumption"
+                                className="form-input"
+                                value={formData.fuelConsumption}
+                                onChange={handleChange}
+                                step="0.1"
+                            />
+                        </div>
+                        <div className="form-group">
                             <label className="form-label">Initial Usage Hours</label>
                             <input
                                 type="number"
@@ -189,6 +212,7 @@ function AddVehicleModal({ isOpen, onClose, onVehicleAdded }) {
                             value={formData.lastServiceDate}
                             onChange={handleChange}
                             required
+                            max={new Date().toISOString().split('T')[0]}
                         />
                     </div>
 

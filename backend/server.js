@@ -14,8 +14,8 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -40,8 +40,11 @@ app.get('/health', (req, res) => {
 app.use('/api/jobs', jobRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/customer-portal', require('./routes/customerPortal.routes'));
 app.use('/api/drivers', require('./routes/driver.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
+app.use('/api/trip-costs', require('./routes/tripCost.routes'));
+app.use('/api/proof-of-delivery', require('./routes/proofOfDelivery.routes'));
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -107,7 +110,6 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log(`\n${'='.repeat(60)}`);
             console.log(`🚀 SmartLogix API Server`);
-            console.log(`📦 Component: Smart Job Booking & Route Optimizer`);
             console.log(`🌐 Server running on port ${PORT}`);
             console.log(`🔗 API: http://localhost:${PORT}`);
             console.log(`📊 Health: http://localhost:${PORT}/health`);

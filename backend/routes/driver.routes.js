@@ -4,6 +4,12 @@ const Driver = require('../models/driver.model');
 const Trip = require('../models/trip.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const driverAvailabilityService = require('../services/driverAvailability.service');
+const DriverIncident = require('../models/driverIncident.model');
+const driverScoringService = require('../services/driverScoring.service');
+
+// If a driver's monthly score falls below this, mark them unavailable (off-duty).
+const UNAVAILABLE_SCORE_THRESHOLD = 70;
 
 // GET all drivers
 router.get('/', async (req, res) => {
@@ -20,63 +26,104 @@ router.get('/available', async (req, res) => {
     try {
         const { pickupDatetime, deliveryDatetime } = req.query;
 
-        // Step 1: Get drivers who are not explicitly off-duty
-        const potentialDrivers = await Driver.find({ status: { $nin: ['off-duty'] } }).sort({ safetyScore: -1 });
-
-        if (!pickupDatetime) {
-            // Fallback: If no datetimes provided, return all potential drivers
-            return res.json({ success: true, count: potentialDrivers.length, drivers: potentialDrivers });
-        }
-
-        const newJobStart = new Date(pickupDatetime);
-        // Default to 4 hours if delivery time is missing
-        const newJobEnd = deliveryDatetime ? new Date(deliveryDatetime) : new Date(newJobStart.getTime() + (4 * 60 * 60 * 1000));
-
-        // Buffer to ensure driver has time to travel between jobs (1 hour)
-        const bufferMs = 60 * 60 * 1000;
-        const searchStart = new Date(newJobStart.getTime() - bufferMs);
-        const searchEnd = new Date(newJobEnd.getTime() + bufferMs);
-
-        const driverIds = potentialDrivers.map(d => d._id);
-
-        // Step 2: Identify which drivers are busy during this specific time window
-        const overlappingTrips = await Trip.find({
-            driver: { $in: driverIds },
-            status: { $in: ['scheduled', 'active'] }
-        }).populate('primaryJob backhaulJob');
-
-        const busyDriverIds = new Set();
-
-        overlappingTrips.forEach(trip => {
-            let tripStart, tripEnd;
-
-            if (trip.primaryJob && trip.primaryJob.pickup) {
-                tripStart = new Date(trip.primaryJob.pickup.datetime);
-
-                // End time is either backhaul delivery or primary delivery
-                if (trip.backhaulJob && trip.backhaulJob.delivery) {
-                    tripEnd = new Date(trip.backhaulJob.delivery.datetime);
-                } else if (trip.primaryJob.delivery) {
-                    tripEnd = new Date(trip.primaryJob.delivery.datetime);
-                } else {
-                    tripEnd = new Date(tripStart.getTime() + (4 * 60 * 60 * 1000)); // fallback
-                }
-
-                // Check if intervals overlap logic: (StartA < EndB) and (EndA > StartB)
-                if (searchStart < tripEnd && searchEnd > tripStart) {
-                    if (trip.driver) {
-                        busyDriverIds.add(trip.driver.toString());
-                    }
-                }
-            }
-        });
-
-        // Step 3: Filter down to truly available drivers
-        const availableDrivers = potentialDrivers.filter(d => !busyDriverIds.has(d._id.toString()));
+        const availableDrivers = await driverAvailabilityService.getAvailableDrivers(pickupDatetime, deliveryDatetime);
 
         res.json({ success: true, count: availableDrivers.length, drivers: availableDrivers });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/drivers/:id/incidents
+ * Returns recent incidents for the driver.
+ * Query:
+ *  - limit (default 5, max 20)
+ */
+router.get('/:id/incidents', async (req, res) => {
+    try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) return res.status(404).json({ success: false, error: 'Driver not found' });
+
+        const limitRaw = Number(req.query.limit);
+        const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 20) : 5;
+
+        const incidents = await DriverIncident.find({ driver: driver._id })
+            .sort({ occurredAt: -1 })
+            .limit(limit);
+
+        return res.json({ success: true, count: incidents.length, incidents });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * POST /api/drivers/:id/incidents
+ * Log an incident for a driver (verified incidents affect score depending on category rules).
+ */
+router.post('/:id/incidents', async (req, res) => {
+    try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) return res.status(404).json({ success: false, error: 'Driver not found' });
+
+        const { category, severity, verified = false, meta = {}, occurredAt, vehicle, trip } = req.body || {};
+        if (!category || !severity) {
+            return res.status(400).json({ success: false, error: 'category and severity are required' });
+        }
+
+        const incident = await DriverIncident.create({
+            driver: driver._id,
+            vehicle: vehicle || null,
+            trip: trip || null,
+            category,
+            severity,
+            verified: Boolean(verified),
+            meta,
+            occurredAt: occurredAt ? new Date(occurredAt) : new Date()
+        });
+
+        // Recompute score immediately; if too low, make driver unavailable (unless currently on-trip).
+        let statusChanged = false;
+        try {
+            const scoreSnapshot = await driverScoringService.computeMonthlyDriverScore({ driverId: driver._id });
+            if (typeof scoreSnapshot?.score === 'number' && scoreSnapshot.score < UNAVAILABLE_SCORE_THRESHOLD) {
+                if (driver.status !== 'on-trip' && driver.status !== 'off-duty') {
+                    driver.status = 'off-duty';
+                    await driver.save();
+                    statusChanged = true;
+                }
+            }
+        } catch (e) {
+            // Scoring failure should not block incident logging
+            console.error('Failed to recompute driver score after incident:', e?.message || e);
+        }
+
+        return res.status(201).json({ success: true, incident, statusChanged, driverStatus: driver.status });
+    } catch (error) {
+        return res.status(400).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * GET /api/drivers/:id/score
+ * Returns the computed score for the given month (defaults to current month).
+ * Query: ?month=YYYY-MM-01 (any date in the target month also works)
+ */
+router.get('/:id/score', async (req, res) => {
+    try {
+        const driver = await Driver.findById(req.params.id);
+        if (!driver) return res.status(404).json({ success: false, error: 'Driver not found' });
+
+        const month = req.query.month ? new Date(req.query.month) : null;
+        const score = await driverScoringService.computeMonthlyDriverScore({
+            driverId: driver._id,
+            month
+        });
+
+        return res.json({ success: true, score });
+    } catch (error) {
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 

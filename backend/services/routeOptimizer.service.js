@@ -3,7 +3,7 @@ const axios = require('axios');
 /**
  * Route Optimizer Service
  * Integrates with Openrouteservice (ORS) API
- * Optimizes multi-stop routes for primary job + optional backhaul
+ * Optimizes multi stop routes for primary job + optional backhaul
  * Falls back to Haversine estimation as an absolute last resort
  */
 

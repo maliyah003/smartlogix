@@ -49,13 +49,25 @@ export const driverAPI = {
     getById: (id) => api.get(`/drivers/${id}`),
     create: (data) => api.post('/drivers', data),
     update: (id, data) => api.put(`/drivers/${id}`, data),
-    delete: (id) => api.delete(`/drivers/${id}`)
+    delete: (id) => api.delete(`/drivers/${id}`),
+    getScore: (id, params = {}) => api.get(`/drivers/${id}/score`, { params }),
+    addIncident: (id, data) => api.post(`/drivers/${id}/incidents`, data),
+    getIncidents: (id, params = {}) => api.get(`/drivers/${id}/incidents`, { params })
 };
 
 export const notificationAPI = {
     getNotifications: () => api.get('/notifications'),
     markAsRead: (id) => api.patch(`/notifications/${id}/read`),
     markAllAsRead: () => api.patch('/notifications/read-all'),
+};
+
+export const tripCostAPI = {
+    getSummary: () => api.get('/trip-costs/summary'),
+};
+
+export const proofOfDeliveryAPI = {
+    getAll: (params = {}) => api.get('/proof-of-delivery', { params }),
+    getByTripId: (tripId) => api.get(`/proof-of-delivery/trip/${tripId}`)
 };
 
 export default api;

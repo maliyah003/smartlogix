@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { tripAPI, driverAPI } from '../../services/api';
 import './TripRefusals.css';
-import { BlinkBlur } from 'react-loading-indicators';
+import PageLoading from '../common/PageLoading';
 
 function TripRefusals() {
     const [trips, setTrips] = useState([]);
@@ -117,9 +117,7 @@ function TripRefusals() {
 
     if (loading) {
         return (
-            <div className="loading-container">
-                <BlinkBlur color="#f59e0b" size="medium" text="" textColor="" />
-            </div>
+            <PageLoading />
         );
     }
 
@@ -154,7 +152,7 @@ function TripRefusals() {
                     trips.map(trip => (
                         <div key={trip._id} className="refusal-card">
                             <div className="refusal-header">
-                                <h3>{trip.tripId}</h3>
+                                <h3>{trip.primaryJob?.jobId || trip.tripId}</h3>
                                 <div className="vehicle-badge">
                                     <span className="material-icons-outlined">local_shipping</span>
                                     {trip.vehicle?.registrationNumber || 'Unknown'}
@@ -232,7 +230,7 @@ function TripRefusals() {
                         width: '400px', maxWidth: '90%'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Reassign Trip {selectedTrip.tripId}</h2>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Reassign job {selectedTrip.primaryJob?.jobId || selectedTrip.tripId}</h2>
                             <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>&times;</button>
                         </div>
                         <div style={{ marginBottom: '24px' }}>

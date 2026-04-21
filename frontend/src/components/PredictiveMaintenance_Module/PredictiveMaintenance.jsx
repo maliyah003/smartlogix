@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { vehicleAPI } from '../../services/api';
 import './PredictiveMaintenance.css';
-import { BlinkBlur } from 'react-loading-indicators';
+import PageLoading from '../common/PageLoading';
 
 const PredictiveMaintenance = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -84,40 +84,30 @@ const PredictiveMaintenance = () => {
     const predText = prediction.maintenance_prediction || prediction.engine_health_percentage || 'OK';
     const textLower = String(predText).toLowerCase();
     
-    let badgeClass = 'status-info';
-    let icon = 'info';
-    let bgOpacity = 'rgba(59, 130, 246, 0.1)';
+    let statusTheme = 'info';
+    let icon = 'analytics';
     
     if (textLower.includes('no immediate') || textLower === 'ok' || textLower === 'good' || textLower === 'success') {
-      badgeClass = 'status-success';
+      statusTheme = 'success';
       icon = 'check_circle';
-      bgOpacity = 'rgba(16, 185, 129, 0.1)';
     } else if (textLower.includes('routine') || textLower.includes('inspection')) {
-      badgeClass = 'status-warning';
-      icon = 'build';
-      bgOpacity = 'rgba(245, 158, 11, 0.1)';
+      statusTheme = 'warning';
+      icon = 'handyman';
     } else if (textLower.includes('overhaul') || textLower.includes('replacement') || textLower.includes('repair')) {
-      badgeClass = 'status-error';
+      statusTheme = 'error';
       icon = 'warning';
-      bgOpacity = 'rgba(239, 68, 68, 0.1)';
     }
 
     return (
-      <div style={{
-        display: 'flex', alignItems: 'flex-start', gap: '16px', marginTop: '16px', marginBottom: '16px',
-        padding: '16px 20px', backgroundColor: bgOpacity, borderRadius: 'var(--radius-md)',
-        borderLeft: `4px solid var(--${badgeClass})`
-      }}>
-        <span className="material-icons-outlined" style={{ color: `var(--${badgeClass})`, fontSize: '28px', marginTop: '2px' }}>
-          {icon}
-        </span>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', fontWeight: 600 }}>
-            Model Inference Result
-          </span>
-          <span style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
-            {predText}
-          </span>
+      <div className={`inference-result-box theme-${statusTheme}`}>
+        <div className="inference-result-content">
+           <div className="inference-icon-wrapper">
+             <span className="material-icons-outlined">{icon}</span>
+           </div>
+           <div className="inference-text-wrapper">
+             <span className="inference-label">AI Diagnostic Analysis</span>
+             <h4 className="inference-value">{predText}</h4>
+           </div>
         </div>
       </div>
     );
@@ -125,8 +115,8 @@ const PredictiveMaintenance = () => {
 
   if (loading) {
     return (
-      <div className="predictive-maintenance-container fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-        <BlinkBlur color="#f59e0b" size="medium" text="" textColor="" />
+      <div className="predictive-maintenance-container fade-in">
+        <PageLoading style={{ minHeight: '60vh' }} />
       </div>
     );
   }
@@ -139,25 +129,23 @@ const PredictiveMaintenance = () => {
             <span className="material-icons-outlined ai-icon">memory</span>
             <h1>Predictive Maintenance Engine</h1>
           </div>
-          <div className="status-badge">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Fleet Target:</span>
-              <select 
-                className="target-select"
-                value={selectedVehicle || ''} 
-                onChange={(e) => setSelectedVehicle(e.target.value)}
-              >
-                {vehicles.map(v => (
-                  <option key={v._id} value={v._id}>{v.registrationNumber} ({v.vehicleType})</option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--border-light)' }}>
-              <span 
+          <div className="pm-fleet-bar" role="group" aria-label="Fleet target and engine status">
+            <span className="pm-fleet-bar__label">Fleet Target:</span>
+            <select
+              className="target-select"
+              value={selectedVehicle || ''}
+              onChange={(e) => setSelectedVehicle(e.target.value)}
+            >
+              {vehicles.map(v => (
+                <option key={v._id} value={v._id}>{v.registrationNumber} ({v.vehicleType})</option>
+              ))}
+            </select>
+            <div className="pm-fleet-bar__engine" role="status">
+              <span
                 className={`status-dot ${engineStatus === 'online' ? 'active' : engineStatus === 'checking' ? 'pulsing' : 'disconnected'}`}
                 title={engineStatus === 'online' ? 'Engine is reachable' : 'Engine is offline'}
-              ></span>
-              <span style={{ color: 'var(--text-secondary)' }}>
+              />
+              <span className="pm-fleet-bar__engine-text">
                 {engineStatus === 'online' ? 'Live Engine Linked' : engineStatus === 'checking' ? 'Checking Engine...' : 'Engine Disconnected'}
               </span>
             </div>
@@ -241,7 +229,7 @@ const PredictiveMaintenance = () => {
             <div className="glass-card ai-insights">
               <h3>Inference Matrix & Maintenance Logs</h3>
               
-              <div className="insights-list" style={{ overflowY: 'auto', maxHeight: '500px', paddingRight: '8px' }}>
+              <div className="insights-list" style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingRight: '8px' }}>
                 {logs.length === 0 ? (
                   <div className="empty-state" style={{ marginTop: '40px' }}>
                     <span className="material-icons-outlined" style={{ fontSize: '3rem', opacity: 0.6, marginBottom: '12px' }}>receipt_long</span>
@@ -249,23 +237,56 @@ const PredictiveMaintenance = () => {
                   </div>
                 ) : (
                   logs.map((log, idx) => (
-                    <div key={log._id} className={`insight-item ${idx === 0 ? 'latest' : ''}`}>
-                      <span className="material-icons-outlined" style={{ color: idx === 0 ? 'var(--status-info)' : 'var(--text-tertiary)', marginTop: '2px' }}>
-                        {idx === 0 ? 'auto_graph' : 'history'}
-                      </span>
-                      <div className="insight-text" style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                           <strong>Prediction Output Request {log.trip ? `(Trip ${log.trip.tripId})` : ''}</strong>
-                           <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{new Date(log.createdAt).toLocaleString()}</span>
+                    <div key={log._id} className={`insight-card ${idx === 0 ? 'latest-insight' : ''}`}>
+                      <div className="insight-card-header">
+                        <div className="insight-title-group">
+                           <span className="material-icons-outlined insight-header-icon">
+                             {idx === 0 ? 'query_stats' : 'history'}
+                           </span>
+                           <div>
+                             <strong className="insight-title">Inference Output</strong>
+                             <span className="insight-trip-id">
+                               {log.trip?.primaryJob?.jobId || log.trip?.tripId || 'MANUAL'}
+                             </span>
+                           </div>
                         </div>
-                        
-                        {renderPredictionBadge(log.prediction)}
+                        <span className="insight-timestamp">
+                          {new Date(log.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                        </span>
+                      </div>
+                      
+                      <div className="insight-badge-container">
+                         {renderPredictionBadge(log.prediction)}
+                      </div>
 
-                        <div style={{ display: 'flex', gap: '16px', color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '8px' }}>
-                          <span><strong>Load:</strong> {log.metrics.actual_load || 0} T</span>
-                          <span><strong>Route:</strong> {log.metrics.route_info || 'N/A'}</span>
-                          <span><strong>Usage:</strong> {log.metrics.usage_hours || 0} hr</span>
-                          <span><strong>Since Svc:</strong> {log.metrics.days_since_service || 0} d</span>
+                      <div className="insight-metrics-grid">
+                        <div className="metric-pill">
+                          <span className="material-icons-outlined pill-icon">fitness_center</span>
+                          <div className="pill-text">
+                            <span className="pill-label">Load</span>
+                            <span className="pill-value">{log.metrics.actual_load || 0} T</span>
+                          </div>
+                        </div>
+                        <div className="metric-pill">
+                          <span className="material-icons-outlined pill-icon">route</span>
+                          <div className="pill-text">
+                            <span className="pill-label">Route Env</span>
+                            <span className="pill-value">{log.metrics.route_info || 'N/A'}</span>
+                          </div>
+                        </div>
+                        <div className="metric-pill">
+                          <span className="material-icons-outlined pill-icon">schedule</span>
+                          <div className="pill-text">
+                            <span className="pill-label">Usage</span>
+                            <span className="pill-value">{log.metrics.usage_hours || 0} hr</span>
+                          </div>
+                        </div>
+                        <div className="metric-pill">
+                          <span className="material-icons-outlined pill-icon">build_circle</span>
+                          <div className="pill-text">
+                            <span className="pill-label">Since Svc</span>
+                            <span className="pill-value">{log.metrics.days_since_service || 0} d</span>
+                          </div>
                         </div>
                       </div>
                     </div>
