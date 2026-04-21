@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../services/api';
 import './Header.css';
-import logoImg from '../assets/SmartLogixLogo.png';
+import logoImg from '../assets/SmartLogixLOGO.png';
 
 function Header() {
     const navigate = useNavigate();
