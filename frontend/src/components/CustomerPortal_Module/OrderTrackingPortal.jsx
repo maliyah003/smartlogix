@@ -7,7 +7,7 @@ import LiveMap from './LiveMap';
 import heroImage from '../../assets/Smartlogix Hero.jpg';
 import './OrderTracking.css';
 
-const API_URL = 'http://localhost:5001/api/customer-portal';
+const API_URL = 'https://smartlogix-production.up.railway.app/api/customer-portal';
 
 /** Map + delivery instructions only once the trip is live or finished (not while scheduled). */
 function shouldShowMapAndDeliveryInstructions(job) {
