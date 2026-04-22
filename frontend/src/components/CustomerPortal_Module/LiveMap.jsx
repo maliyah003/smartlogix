@@ -120,7 +120,7 @@ function LiveMap({
         if (!jobId) return;
         setIsSavingNote(true);
         try {
-            await axios.patch(`http://localhost:5001/api/customer-portal/notes/${jobId}`, { note });
+            await axios.patch(`https://smartlogix-production.up.railway.app/api/customer-portal/notes/${jobId}`, { note });
             onNoteSaved?.(note);
             showToast('Delivery note saved successfully.', 'success');
         } catch (err) {
@@ -137,7 +137,7 @@ function LiveMap({
         if (!jobId || !hasNoteContent) return;
         setIsSavingNote(true);
         try {
-            await axios.patch(`http://localhost:5001/api/customer-portal/notes/${jobId}`, { note: '' });
+            await axios.patch(`https://smartlogix-production.up.railway.app/api/customer-portal/notes/${jobId}`, { note: '' });
             setNote('');
             onNoteSaved?.('');
             setShowDeleteConfirm(false);
