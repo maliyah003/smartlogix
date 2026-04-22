@@ -3,7 +3,7 @@ import axios from 'axios';
 import PageLoading from '../common/PageLoading';
 import './FuelConsistency.css';
 
-const API_URL = 'http://localhost:5001/api/trip-costs';
+const API_URL = 'https://smartlogix-production.up.railway.app/api/trip-costs';
 
 function FuelConsistency() {
     const [reports, setReports] = useState([]);
