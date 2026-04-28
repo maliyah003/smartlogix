@@ -1,0 +1,211 @@
+.refusals-container {
+    padding: 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.title-section .badge {
+    font-size: 14px;
+    padding: 6px 12px;
+}
+
+.refusal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+}
+
+.refusal-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.refusal-card:hover {
+    border-color: #F87171;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.refusal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.refusal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.vehicle-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.vehicle-badge .material-icons-outlined {
+    font-size: 18px;
+}
+
+.driver-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.driver-avatar {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+}
+
+.driver-name {
+    margin: 0 0 4px 0;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.driver-contact {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+.reason-box {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-left: 4px solid #EF4444;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+}
+
+.reason-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #B91C1C;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.reason-text {
+    margin: 0;
+    color: #991B1B;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.job-summary {
+    display: flex;
+    gap: 24px;
+    padding: 16px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+}
+
+.job-summary .label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+.job-summary p {
+    margin: 0;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.actions-bar {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    gap: 12px;
+}
+
+.reject-btn {
+    flex: 1;
+    background: #FEF2F2 !important;
+    color: #DC2626 !important;
+    border: 1px solid #DC2626 !important;
+    font-weight: 600;
+}
+
+.reject-btn:hover {
+    background: #FEE2E2 !important;
+}
+
+.accept-btn {
+    flex: 2;
+    background: var(--sidebar-active) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.accept-btn:hover {
+    background: #2D3142 !important;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 20px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-light);
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.empty-state .material-icons-outlined {
+    font-size: 64px;
+    margin-bottom: 24px;
+    color: #D1D5DB;
+}
+
+.empty-state h3 {
+    margin: 0 0 8px 0;
+    color: var(--text-secondary);
+}
+
+.empty-state p {
+    margin: 0;
+}
