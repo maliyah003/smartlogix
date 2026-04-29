@@ -22,7 +22,7 @@ const TripEconomics = () => {
 
     const fetchTripCosts = async () => {
         try {
-            const response = await axios.get('http://localhost:5001/api/trip-costs/summary');
+            const response = await axios.get('https://smartlogix-production.up.railway.app/api/trip-costs/summary');
             if (response.data.success) {
                 setTripCosts(response.data.costs);
             }
