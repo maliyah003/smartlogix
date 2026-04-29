@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import logo from '../assets/SmartLogixLOGO.png';
+import logo from '../assets/SmartLogixLogo.png';
 import './Sidebar.css';
 
 function Sidebar() {
