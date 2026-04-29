@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logoImg from '../assets/SmartLogixLogo.png';
+import logoImg from '../assets/smartlogixlogo.png';
 import './PublicFooter.css';
 
 function ExternalLink({ href, children }) {
