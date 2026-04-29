@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router-dom';
-import logoImg from '../assets/smartlogixlogo.png';
+import logoImg from '../assets/SmartLogixLogo.png';
 import './PublicHeader.css';
 
 function ChevronDown() {
