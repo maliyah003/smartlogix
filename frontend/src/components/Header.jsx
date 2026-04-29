@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { notificationAPI } from '../services/api';
 import { clearSession } from '../auth/session';
 import './Header.css';
-import logoImg from '../assets/SmartLogixLogo.png';
+import logoImg from '../assets/smartlogixlogo.png';
 
 function Header() {
     const navigate = useNavigate();
